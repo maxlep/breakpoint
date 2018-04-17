@@ -6,8 +6,8 @@ using UnityEngine;
 public class EnemyMotor : MonoBehaviour {
 
 	public float speed = 5f;
-	public float jumpHeight = 1f;
-	public float jumpDistance = 1f;
+	public float jumpHeight = 3f;
+	public float jumpDistance = 3f;
 	public float fallMultiplier = 1f;
 
 	Rigidbody rb;
@@ -22,7 +22,7 @@ public class EnemyMotor : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
-		if (rb.velocity.magnitude > speed) rb.velocity *= speed / rb.velocity.magnitude;
+		//if (rb.velocity.magnitude > speed) rb.velocity *= speed / rb.velocity.magnitude;
 		if (Vector3.Dot(rb.velocity, Physics.gravity) > 0) rb.AddForce(Physics.gravity * (fallMultiplier - 1));
 	}
 
@@ -38,6 +38,7 @@ public class EnemyMotor : MonoBehaviour {
 
 	public void ClearLastAction() {
 		lastAction = null;
+		actionComplete = true;
 	}
 
 	public bool IsBusy() {
@@ -51,6 +52,12 @@ public class EnemyMotor : MonoBehaviour {
 
 	public void DoAfter(IEnumerator action) {
 		StartCoroutine(After(action));
+	}
+
+	public bool DoWait(IEnumerator action) {
+		StartCoroutine(After(action));
+		while (IsBusy()) { }
+		return true;
 	}
 
 	public IEnumerator After(IEnumerator action) {
@@ -71,45 +78,38 @@ public class EnemyMotor : MonoBehaviour {
 	// Actions
 	public IEnumerator FrontFlip() {
 		lastAction = "FrontFlip";
-		actionComplete = false;
-		float v = rb.mass * Physics.gravity.magnitude * 35;
-		float h = 60;
+		float v = Mathf.Sqrt(2 * Physics.gravity.magnitude * jumpHeight);
+		float time = v / Physics.gravity.magnitude + Mathf.Sqrt(2 * jumpHeight / Physics.gravity.magnitude * fallMultiplier);
+		float h = jumpDistance / time;
 		Vector3 force = Vector3.up * v + transform.forward * h;
-		AddForce_CapSpeed(force);
+		rb.AddForce(force, ForceMode.VelocityChange);
 
 		float elapsedTime = 0;
 		while (elapsedTime < 0.3f) {
 			yield return null;
 			elapsedTime += Time.deltaTime;
 		}
-		Vector3 torque = transform.right * 50;
-		rb.AddTorque(torque);
+		Vector3 av = transform.right * (2 * Mathf.PI / (time - 0.3f));
+		rb.AddTorque(av, ForceMode.VelocityChange);
 
 		if (lastAction == "FrontFlip") actionComplete = true;
-
-		//elapsedTime = 0;
-		//while (elapsedTime < 1.25f) {
-		//	yield return null;
-		//	elapsedTime += Time.deltaTime;
-		//}
-		//StartCoroutine("BackFlip");
 	}
 
 	public IEnumerator BackFlip() {
 		lastAction = "BackFlip";
-		actionComplete = false;
-		float v = rb.mass * Physics.gravity.magnitude * 35;
-		float h = -60;
-		Vector3 force = Vector3.up * v + transform.forward * h;
-		AddForce_CapSpeed(force);
+		float v = Mathf.Sqrt(2 * Physics.gravity.magnitude * jumpHeight);
+		float time = v / Physics.gravity.magnitude + Mathf.Sqrt(2 * jumpHeight / Physics.gravity.magnitude * fallMultiplier);
+		float h = jumpDistance / time;
+		Vector3 force = Vector3.up * v + -transform.forward * h;
+		rb.AddForce(force, ForceMode.VelocityChange);
 
 		float elapsedTime = 0;
 		while (elapsedTime < 0.3f) {
 			yield return null;
 			elapsedTime += Time.deltaTime;
 		}
-		Vector3 torque = transform.right * -50;
-		rb.AddTorque(torque);
+		Vector3 av = transform.right * -(2 * Mathf.PI / (time - 0.3f));
+		rb.AddTorque(av, ForceMode.VelocityChange);
 
 		if (lastAction == "BackFlip") actionComplete = true;
 	}

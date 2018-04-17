@@ -7,6 +7,7 @@ using UnityEngine;
 public class Enemy : MonoBehaviour, Hackable {
 
 	EnemyMotor motor;
+	Rigidbody rb;
 	Feet feet;
 
 	bool hacked, flag;
@@ -15,7 +16,8 @@ public class Enemy : MonoBehaviour, Hackable {
 	
 	void Start () {
 		motor = GetComponent<EnemyMotor>();
-		feet = transform.GetComponentInChildren<Feet>();
+		rb = GetComponent<Rigidbody>();
+		feet = GetComponentInChildren<Feet>();
 		flag = false;
 	}
 
@@ -36,14 +38,12 @@ public class Enemy : MonoBehaviour, Hackable {
 		} else {
 			// Enemy logic
 			if (!motor.IsBusy() && feet.OnGround()) {
-				motor.DoNow(motor.Wait(1));
+				motor.DoNow(motor.Wait(0.5f));
 				if (dir) {
-					Debug.Log("False");
 					dir = false;
-					motor.DoAfter(motor.BackFlip());
+					//motor.DoAfter(motor.BackFlip());
 					//motor.StartCoroutine(motor.BackFlip());
 				} else {
-					Debug.Log("Front");
 					dir = true;
 					motor.DoAfter(motor.FrontFlip());
 					//motor.StartCoroutine(motor.FrontFlip());
@@ -55,6 +55,11 @@ public class Enemy : MonoBehaviour, Hackable {
 				motor.StartCoroutine(motor.FrontFlip());
 			}
 		}
+	}
+
+	void FixedUpdate() {
+		if (feet.OnGround())
+			rb.AddForceAtPosition(Physics.gravity, transform.position - transform.up * -5);
 	}
 
 	public void Hack() {

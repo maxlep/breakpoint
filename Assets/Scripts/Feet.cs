@@ -12,11 +12,10 @@ public class Feet : MonoBehaviour {
 	}
 
 	void Update() {
-		Debug.Log(onGround);
+
 	}
 
 	void OnTriggerEnter(Collider collider) {
-		Debug.Log(collider);
 		if (collider.tag == "Ground") onGround = true;
 	}
 
