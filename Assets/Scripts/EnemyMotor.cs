@@ -8,7 +8,6 @@ public class EnemyMotor : MonoBehaviour {
 	public float speed = 5f;
 	public float jumpHeight = 3f;
 	public float jumpDistance = 3f;
-	public float fallMultiplier = 1f;
 
 	Rigidbody rb;
 
@@ -19,11 +18,6 @@ public class EnemyMotor : MonoBehaviour {
 		rb = GetComponent<Rigidbody>();
 		lastAction = null;
 		actionComplete = true;
-	}
-
-	void FixedUpdate() {
-		//if (rb.velocity.magnitude > speed) rb.velocity *= speed / rb.velocity.magnitude;
-		if (Vector3.Dot(rb.velocity, Physics.gravity) > 0) rb.AddForce(Physics.gravity * (fallMultiplier - 1));
 	}
 
 	void AddForce_CapSpeed(Vector3 force) {
@@ -79,18 +73,27 @@ public class EnemyMotor : MonoBehaviour {
 	public IEnumerator FrontFlip() {
 		lastAction = "FrontFlip";
 		float v = Mathf.Sqrt(2 * Physics.gravity.magnitude * jumpHeight);
-		float time = v / Physics.gravity.magnitude + Mathf.Sqrt(2 * jumpHeight / Physics.gravity.magnitude * fallMultiplier);
+		//float time = v / Physics.gravity.magnitude + Mathf.Sqrt(2 * jumpHeight / Physics.gravity.magnitude * fallMultiplier);
+		float time = v / Physics.gravity.magnitude * 2;
 		float h = jumpDistance / time;
 		Vector3 force = Vector3.up * v + transform.forward * h;
 		rb.AddForce(force, ForceMode.VelocityChange);
 
-		float elapsedTime = 0;
-		while (elapsedTime < 0.3f) {
+		float waitTime = 0.3f;
+		while (waitTime > 0) {
 			yield return null;
-			elapsedTime += Time.deltaTime;
+			waitTime -= Time.deltaTime;
 		}
-		Vector3 av = transform.right * (2 * Mathf.PI / (time - 0.3f));
+		//Vector3 av = transform.right * (2 * Mathf.PI / (time - 0.3f - 0.2f));
+		Vector3 av = Vector3.Cross(-transform.forward, Vector3.up) * (2 * Mathf.PI / (time - 0.3f - 0.2f));
 		rb.AddTorque(av, ForceMode.VelocityChange);
+
+		waitTime = time - 0.3f - 0.2f;
+		while (waitTime > 0) {
+			yield return null;
+			waitTime -= Time.deltaTime;
+		}
+		// rb.AddTorque(-av, ForceMode.VelocityChange);
 
 		if (lastAction == "FrontFlip") actionComplete = true;
 	}
@@ -98,18 +101,52 @@ public class EnemyMotor : MonoBehaviour {
 	public IEnumerator BackFlip() {
 		lastAction = "BackFlip";
 		float v = Mathf.Sqrt(2 * Physics.gravity.magnitude * jumpHeight);
-		float time = v / Physics.gravity.magnitude + Mathf.Sqrt(2 * jumpHeight / Physics.gravity.magnitude * fallMultiplier);
+		float time = v / Physics.gravity.magnitude * 2;
 		float h = jumpDistance / time;
 		Vector3 force = Vector3.up * v + -transform.forward * h;
 		rb.AddForce(force, ForceMode.VelocityChange);
 
-		float elapsedTime = 0;
-		while (elapsedTime < 0.3f) {
+		float waitTime = 0.3f;
+		while (waitTime > 0) {
 			yield return null;
-			elapsedTime += Time.deltaTime;
+			waitTime -= Time.deltaTime;
 		}
-		Vector3 av = transform.right * -(2 * Mathf.PI / (time - 0.3f));
+		//Vector3 av = transform.right * -(2 * Mathf.PI / (time - 0.3f - 0.2f));
+		Vector3 av = Vector3.Cross(transform.forward, Vector3.up) * (2 * Mathf.PI / (time - 0.3f - 0.2f));
 		rb.AddTorque(av, ForceMode.VelocityChange);
+
+		waitTime = time - 0.3f - 0.2f;
+		while (waitTime > 0) {
+			yield return null;
+			waitTime -= Time.deltaTime;
+		}
+
+		if (lastAction == "BackFlip") actionComplete = true;
+	}
+
+	public IEnumerator Flip(Vector3 dir) {
+		lastAction = "Flip";
+		float v = Mathf.Sqrt(2 * Physics.gravity.magnitude * jumpHeight);
+		float time = v / Physics.gravity.magnitude * 2;
+		float h = jumpDistance / time;
+		dir = Vector3.Scale(dir, new Vector3(1, 0, 1)).normalized;
+		Vector3 force = Vector3.up * v + dir * h;
+		rb.AddForce(force, ForceMode.VelocityChange);
+
+		float waitTime = 0.3f;
+		while (waitTime > 0) {
+			yield return null;
+			waitTime -= Time.deltaTime;
+		}
+		//Vector3 av = transform.right * -(2 * Mathf.PI / (time - 0.3f - 0.2f));
+		Vector3 av = Vector3.Cross(dir, Vector3.up) * -(2 * Mathf.PI / (time - 0.3f - 0.2f));
+		rb.AddTorque(av, ForceMode.VelocityChange);
+
+		waitTime = time - 0.3f - 0.2f;
+		while (waitTime > 0) {
+			yield return null;
+			waitTime -= Time.deltaTime;
+		}
 
 		if (lastAction == "BackFlip") actionComplete = true;
 	}
